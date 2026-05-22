@@ -174,6 +174,115 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
+        | PRODUK VARIAN (BARU - Untuk Skripsi)
+        |--------------------------------------------------------------------------
+       */
+        DB::table('produk_varian')->insert([
+            // Varian untuk Tas Wanita Elegan (id_produk = 1)
+            [
+                'id_produk'     => 1,
+                'nama_varian'   => 'Hitam',
+                'stok_varian'   => 5,
+                'gambar_varian' => null, // Eksplisit null jika tidak ada gambar
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+            [
+                'id_produk'     => 1,
+                'nama_varian'   => 'Coklat',
+                'stok_varian'   => 5,
+                'gambar_varian' => null,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+            // Varian untuk Dompet Kulit Premium (id_produk = 2)
+            [
+                'id_produk'     => 2,
+                'nama_varian'   => 'Hitam',
+                'stok_varian'   => 10,
+                'gambar_varian' => null,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+            [
+                'id_produk'     => 2,
+                'nama_varian'   => 'Maroon',
+                'stok_varian'   => 5,
+                'gambar_varian' => null,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+            // Varian untuk Kacamata Fashion (id_produk = 3)
+            // PERBAIKAN: Menambahkan 'nama_varian' yang sebelumnya hilang
+            [
+                'id_produk'     => 3,
+                'nama_varian'   => 'Hitam', 
+                'stok_varian'   => 10,
+                'gambar_varian' => 'produk/varian/kacamata_hitam.jpg',
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+            [
+                'id_produk'     => 3,
+                'nama_varian'   => 'Gold',
+                'stok_varian'   => 10,
+                'gambar_varian' => null,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
+        ]);
+
+        /*
+
+        |--------------------------------------------------------------------------
+        | PRODUK GAMBAR (BARU - Untuk Skripsi)
+        |--------------------------------------------------------------------------
+        */
+
+        DB::table('produk_gambar')->insert([
+            // Gambar tambahan untuk Tas Wanita Elegan (id_produk = 1)
+            [
+                'id_produk'   => 1,
+                'path_gambar' => 'produk/gambar/tas_elegan_2.jpg',
+                'urutan'      => 1,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            [
+                'id_produk'   => 1,
+                'path_gambar' => 'produk/gambar/tas_elegan_3.jpg',
+                'urutan'      => 2,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Gambar tambahan untuk Dompet Kulit Premium (id_produk = 2)
+            [
+                'id_produk'   => 2,
+                'path_gambar' => 'produk/gambar/dompet_kulit_2.jpg',
+                'urutan'      => 1,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Gambar tambahan untuk Kacamata Fashion (id_produk = 3)
+            [
+                'id_produk'   => 3,
+                'path_gambar' => 'produk/gambar/kacamata_fashion_2.jpg',
+                'urutan'      => 1,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            [
+                'id_produk'   => 3,
+                'path_gambar' => 'produk/gambar/kacamata_fashion_3.jpg',
+                'urutan'      => 2,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+        ]);
+
+        /*
+        
+        |--------------------------------------------------------------------------
         | PESANAN
         |--------------------------------------------------------------------------
         */

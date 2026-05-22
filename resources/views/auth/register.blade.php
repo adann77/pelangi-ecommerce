@@ -1,59 +1,162 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar | Pelangi Accessories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .input-focus { @apply focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased selection:bg-violet-200 selection:text-violet-800 min-h-screen flex flex-col">
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="nama" :value="__('Nama')" />
-
-<x-text-input id="nama"
-              class="block mt-1 w-full"
-              type="text"
-              name="nama"
-              :value="old('nama')"
-              required autofocus autocomplete="nama" />
-            <x-input-error :messages="$errors->get('nama')" class="mt-2" />
-        
+    <!-- NAVBAR SIMPLIFIED -->
+    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ route('home') }}" class="text-xl font-bold flex items-center gap-2">
+                    <img src="{{ asset('storage/image/logo.png') }}" alt="Logo" class="w-8 h-8 object-contain" 
+                         onerror="this.outerHTML='<div class=\'w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-[10px] text-gray-500\'>Logo</div>'">
+                    <span class="text-gray-900">Pelangi</span> <span class="text-pink-500">Accessories</span>
+                </a>
+                <!-- <a href="{{ route('home') }}" class="text-gray-500 hover:text-violet-600 transition-colors text-sm font-medium">
+                    &larr; Kembali ke Beranda
+                </a> -->
+            </div>
         </div>
+    </nav>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md">
+            
+            <!-- Card Form -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Buat Akun Baru 🎀</h2>
+                    <p class="text-gray-500 text-sm mt-2">Daftar untuk mulai berbelanja aksesoris impianmu</p>
+                </div>
+
+                <form method="POST" action="{{ route('register') }}" class="space-y-4">
+                    @csrf
+
+                    <!-- Nama Lengkap -->
+                    <div>
+                        <label for="nama" class="block text-sm font-medium text-gray-700 mb-2">{{ __('Nama Lengkap') }}</label>
+                        <input id="nama" 
+                               type="text" 
+                               name="nama" 
+                               value="{{ old('nama') }}" 
+                               required 
+                               autofocus 
+                               autocomplete="name"
+                               class="block w-full bg-gray-100 border border-transparent rounded-lg py-3 px-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none input-focus @error('nama') border-red-300 @enderror"
+                               placeholder="Masukkan nama lengkap Anda">
+                        @error('nama')
+                            <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">{{ __('Email') }}</label>
+                        <input id="email" 
+                               type="email" 
+                               name="email" 
+                               value="{{ old('email') }}" 
+                               required 
+                               autocomplete="username"
+                               class="block w-full bg-gray-100 border border-transparent rounded-lg py-3 px-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none input-focus @error('email') border-red-300 @enderror"
+                               placeholder="contoh@email.com">
+                        @error('email')
+                            <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">{{ __('Kata Sandi') }}</label>
+                        <input id="password" 
+                               type="password" 
+                               name="password" 
+                               required 
+                               autocomplete="new-password"
+                               class="block w-full bg-gray-100 border border-transparent rounded-lg py-3 px-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none input-focus @error('password') border-red-300 @enderror"
+                               placeholder="Minimal 8 karakter">
+                        @error('password')
+                            <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Konfirmasi Password -->
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">{{ __('Konfirmasi Kata Sandi') }}</label>
+                        <input id="password_confirmation" 
+                               type="password" 
+                               name="password_confirmation" 
+                               required 
+                               autocomplete="new-password"
+                               class="block w-full bg-gray-100 border border-transparent rounded-lg py-3 px-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none input-focus @error('password_confirmation') border-red-300 @enderror"
+                               placeholder="Ulangi kata sandi">
+                        @error('password_confirmation')
+                            <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Terms & Conditions (Opsional) -->
+                    <div class="flex items-start gap-3 pt-2">
+                        <input type="checkbox" 
+                               id="terms" 
+                               required
+                               class="mt-1 rounded border-gray-300 text-violet-600 shadow-sm focus:ring-violet-500 cursor-pointer">
+                        <label for="terms" class="text-xs text-gray-500 leading-relaxed">
+                            Saya menyetujui <a href="#" class="text-violet-600 hover:text-pink-400 font-medium">Syarat & Ketentuan</a> serta <a href="#" class="text-violet-600 hover:text-pink-400 font-medium">Kebijakan Privasi</a> Pelangi Accessories.
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-violet-600 to-pink-400 text-white font-semibold py-3.5 rounded-full hover:shadow-lg hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 mt-2">
+                        {{ __('Daftar') }}
+                    </button>
+                </form>
+
+                <!-- Login Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-500">
+                        {{ __('Sudah punya akun?') }}
+                        <a href="{{ route('login') }}" 
+                           class="text-violet-600 hover:text-pink-400 font-semibold transition-colors">
+                            {{ __('Masuk sekarang') }}
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="mt-8 flex justify-center gap-4 text-gray-400">
+                <div class="flex items-center gap-2 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span>100% Gratis</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span>Data Aman</span>
+                </div>
+            </div>
+
         </div>
+    </main>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+    <!-- SIMPLE FOOTER -->
+    <footer class="bg-white border-t border-gray-100 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-400">&copy; {{ date('Y') }} Pelangi Accessories. All rights reserved.</p>
         </div>
+    </footer>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+</body>
+</html>

@@ -14,6 +14,8 @@ use App\Http\Controllers\admin\RatingController;
 use App\Http\Controllers\admin\ResellerController;
 use App\Http\Controllers\admin\UserController;
 use App\Http\Controllers\admin\LaporanController;
+use App\Http\Controllers\KeranjangController;
+use App\Http\Controllers\CheckOutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,8 +23,12 @@ use App\Http\Controllers\admin\LaporanController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/',       [HomeController::class, 'index'])    ->name('home');
+Route::get('/',        [HomeController::class, 'index'])    ->name('home');
 Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog');
+
+// ✅ BARU: Route Detail Produk (Bisa diakses tanpa login)
+Route::get('/produk/{id}', [KatalogController::class, 'detail'])->name('produk.detail');
+
 Route::get('/about',  fn () => view('about'))              ->name('about');
 
 /*
@@ -39,6 +45,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get ('/pendaftaran-reseller',        [PendaftaranReseller::class, 'create' ])->name('reseller.register.form');
     Route::post('/pendaftaran-reseller',        [PendaftaranReseller::class, 'store'  ])->name('reseller.register.store');
     Route::get ('/pendaftaran-reseller/sukses', [PendaftaranReseller::class, 'success'])->name('reseller.register.success');
+
+    Route::get   ('/keranjang',        [KeranjangController::class, 'index'  ])->name('keranjang.index');
+    Route::post  ('/keranjang',        [KeranjangController::class, 'store'  ])->name('keranjang.store');
+    Route::put   ('/keranjang/{id}',   [KeranjangController::class, 'update' ])->name('keranjang.update');
+    Route::delete('/keranjang/{id}',   [KeranjangController::class, 'destroy'])->name('keranjang.destroy');
+    Route::delete('/keranjang-clear',  [KeranjangController::class, 'clear'  ])->name('keranjang.clear');
+
+    Route::get('/checkout', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [CheckOutController::class, 'process'])->name('checkout.process');
 });
 
 /*
@@ -72,6 +87,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post  ('/produk',          [ProdukController::class, 'store'  ])->name('produk.store');
     Route::put   ('/produk/{produk}', [ProdukController::class, 'update' ])->name('produk.update');
     Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
+    
+
 
     // ── Kategori CRUD ──
     Route::get   ('/kategori',            [KategoriController::class, 'index'  ])->name('kategori.index');

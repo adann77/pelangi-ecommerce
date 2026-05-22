@@ -77,9 +77,13 @@
                 </div>
 
                 <div class="flex items-center space-x-6">
-                    <button class="relative text-gray-500 hover:text-violet-600 transition-colors">
+                    <!-- <button class="relative text-gray-500 hover:text-violet-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    </button>
+                    </button> -->
+                <a href="{{ route('keranjang.index') }}" class="relative text-gray-500 hover:text-violet-600 transition-colors" id="navCartBtn">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span id="navCartBadge" class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+                </a>
 
                     @auth
                     @php $userName = auth()->user()->name ?? auth()->user()->nama ?? 'Pelanggan'; @endphp
@@ -259,7 +263,9 @@
                 <!-- Product Grid -->
                 <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     @foreach($produks as $produk)
-                    <div class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 relative flex flex-col">
+                    
+                    <!-- ✅ DIUBAH: wrapper div menjadi tag <a> agar kartu bisa diklik -->
+                    <a href="{{ route('produk.detail', $produk->id_produk) }}" class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 relative flex flex-col">
 
                         <!-- Badges -->
                         <div class="absolute top-3 left-3 z-10 flex flex-col gap-1">
@@ -272,7 +278,8 @@
                         </div>
 
                         <!-- Wishlist -->
-                        <button class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-pink-500 hover:bg-pink-50 transition-colors shadow-sm">
+                        <!-- ✅ DIUBAH: ditambahkan event.preventDefault() agar klik wishlist tidak memicu pindah halaman -->
+                        <button onclick="event.preventDefault(); event.stopPropagation();" class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-pink-500 hover:bg-pink-50 transition-colors shadow-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         </button>
 
@@ -294,14 +301,29 @@
                                 <span class="text-xs text-gray-400">({{ $produk->ratings_count ?? 0 }})</span>
                             </div>
 
-                            <div class="mt-auto flex items-end justify-between">
-                                <span class="text-base sm:text-lg font-bold text-violet-600">{{ $produk->harga_format }}</span>
-                                <button class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-50 text-violet-600 flex flex-shrink-0 items-center justify-center hover:bg-violet-600 hover:text-white transition-colors">
+                            <div class="mt-auto flex items-end justify-between gap-2">
+                                @php $isReseller = auth()->check() && auth()->user()->role === 'reseller' && $produk->harga_reseller && $produk->harga_reseller > 0; @endphp
+                                <div class="flex flex-col">
+                                    @if($isReseller)
+                                        <!-- <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md w-fit mb-0.5">Reseller</span> -->
+                                    @endif
+                                    <span class="text-base sm:text-lg font-bold {{ $isReseller ? 'text-emerald-600' : 'text-violet-600' }}">{{ $produk->harga_format }}</span>
+                                    @if($isReseller)
+                                        <span class="text-[11px] text-gray-400 line-through">{{ $produk->harga_regular_format }}</span>
+                                    @endif
+                                </div>
+                                <!-- <button onclick="event.preventDefault(); event.stopPropagation();" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-50 text-violet-600 flex flex-shrink-0 items-center justify-center hover:bg-violet-600 hover:text-white transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                </button> -->
+                                <button onclick="event.preventDefault(); event.stopPropagation(); addToCartFromCatalog({{ $produk->id_produk }})" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-50 text-violet-600 flex flex-shrink-0 items-center justify-center hover:bg-violet-600 hover:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 </button>
                             </div>
                         </div>
-                    </div>
+                        
+                    <!-- ✅ DIUBAH: penutup div menjadi penutup tag </a> -->
+                    </a>
+                    
                     @endforeach
                 </div>
 
@@ -532,6 +554,92 @@
             setupRangeSlider('Desktop');
             setupRangeSlider('Mobile');
         });
+
+
+        // ── CSRF Token ──
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    || document.querySelector('input[name="_token"]')?.value;
+
+// ── Toast ──
+let toastTimeout;
+function showToast(message, type = 'success') {
+    let toast = document.getElementById('catalogToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'catalogToast';
+        toast.className = 'fixed top-6 right-6 z-[100] transform translate-x-[120%] transition-transform duration-300 ease-out';
+        toast.innerHTML = `
+            <div class="bg-white border border-gray-200 shadow-2xl rounded-xl px-5 py-4 flex items-center gap-3 max-w-sm">
+                <div id="catalogToastIcon" class="flex-shrink-0"></div>
+                <p id="catalogToastMsg" class="text-sm font-medium text-gray-700"></p>
+            </div>`;
+        document.body.appendChild(toast);
+    }
+    const iconEl = document.getElementById('catalogToastIcon');
+    const msgEl  = document.getElementById('catalogToastMsg');
+    msgEl.textContent = message;
+
+    const icons = {
+        success: '<div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>',
+        error:   '<div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>',
+        info:    '<div class="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>',
+    };
+    iconEl.innerHTML = icons[type] || icons.success;
+
+    toast.classList.remove('translate-x-[120%]');
+    toast.classList.add('translate-x-0');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-[120%]');
+    }, 3000);
+}
+
+function updateCartBadge(count) {
+    const badge = document.getElementById('navCartBadge');
+    if (!badge) return;
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// ── Add to Cart from Catalog ──
+function addToCartFromCatalog(produkId) {
+    @guest
+    showToast('Silakan login terlebih dahulu.', 'info');
+    setTimeout(() => { window.location.href = '{{ route("login") }}'; }, 1500);
+    return;
+    @endguest
+
+    fetch('{{ route("keranjang.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            id_produk: produkId,
+            kuantitas: 1,
+            id_varian: null,
+        }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            updateCartBadge(data.total_items);
+        } else {
+            showToast(data.message || 'Gagal.', 'error');
+        }
+    })
+    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+}
+
+
     </script>
 
 </body>

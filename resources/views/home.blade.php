@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased selection:bg-violet-200 selection:text-violet-800">
@@ -55,9 +56,10 @@
                 </div>
 
                 <div class="flex items-center space-x-6">
-                    <button class="relative text-gray-500 hover:text-violet-600 transition-colors">
+                    <a href="{{ route('keranjang.index') }}" class="relative text-gray-500 hover:text-violet-600 transition-colors" id="navCartBtn">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    </button>
+                        <span id="navCartBadge" class="{{ $cartCount > 0 ? '' : 'hidden' }} absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+                    </a>
 
                     @auth
                     @php $userName = auth()->user()->name ?? auth()->user()->nama ?? 'Pelanggan'; @endphp
@@ -140,9 +142,12 @@
             @if($produks->count())
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 @foreach($produks as $produk)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 group relative flex flex-col">
 
-                    <button class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-pink-400 hover:bg-pink-50 transition-colors shadow-sm">
+                {{-- ✅ DIUBAH: <div> menjadi <a> agar kartu bisa diklik ke detail --}}
+                <a href="{{ route('produk.detail', $produk->id_produk) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300 group relative flex flex-col">
+
+                    {{-- ✅ DIUBAH: Wishlist diberi preventDefault + stopPropagation --}}
+                    <button onclick="event.preventDefault(); event.stopPropagation();" class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-pink-400 hover:bg-pink-50 transition-colors shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </button>
 
@@ -158,26 +163,37 @@
                         <span class="inline-block px-2.5 py-1 bg-violet-100 text-violet-600 text-[11px] font-semibold rounded-md mb-2 w-max">
                             {{ $produk->kategori->nama_kategori ?? 'Lainnya' }}
                         </span>
-                        <h3 class="text-gray-800 font-medium leading-tight mb-2 line-clamp-2">{{ $produk->nama_produk }}</h3>
+                        <h3 class="text-gray-800 font-medium leading-tight mb-2 line-clamp-2 group-hover:text-violet-600 transition-colors">{{ $produk->nama_produk }}</h3>
 
-                    {{-- Rating --}}
-                    @if($produk->ratings_count > 0)
-                    <div class="flex items-center gap-1 mb-2">
-                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        {{-- UBAH INI: ratings_avg_nilai -> ratings_avg_rating (sesuaikan dgn kolom anda) --}}
-                        <span class="text-sm font-semibold text-gray-700">{{ round($produk->ratings_avg_rating, 1) }}</span>
-                        <span class="text-xs text-gray-400">({{ $produk->ratings_count }})</span>
-                    </div>
-                    @endif
+                        {{-- Rating --}}
+                        @if($produk->ratings_count > 0)
+                        <div class="flex items-center gap-1 mb-2">
+                            <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <span class="text-sm font-semibold text-gray-700">{{ round($produk->ratings_avg_rating, 1) }}</span>
+                            <span class="text-xs text-gray-400">({{ $produk->ratings_count }})</span>
+                        </div>
+                        @endif
 
-                        <div class="mt-auto">
-                            <span class="text-lg font-bold text-violet-600 block mb-4">{{ $produk->harga_format }}</span>
-                            <button class="w-full bg-violet-50 text-violet-600 font-semibold py-2.5 rounded-lg hover:bg-violet-600 hover:text-white transition-colors duration-300">
-                                Tambah ke Keranjang
+                        {{-- ✅ DIUBAH: Harga + tombol plus sejajar seperti katalog --}}
+                        <div class="mt-auto flex items-end justify-between gap-2">
+                            @php $isReseller = auth()->check() && auth()->user()->role === 'reseller' && $produk->harga_reseller && $produk->harga_reseller > 0; @endphp
+                            <div class="flex flex-col">
+                                <span class="text-lg font-bold {{ $isReseller ? 'text-emerald-600' : 'text-violet-600' }}">{{ $produk->harga_format }}</span>
+                                @if($isReseller)
+                                <span class="text-xs text-gray-400 line-through">{{ $produk->harga_regular_format }}</span>
+                                @endif
+                            </div>
+
+                            {{-- ✅ DIUBAH: Tombol teks diganti ikon plus bulat --}}
+                            <button onclick="event.preventDefault(); event.stopPropagation(); addToCartFromHome({{ $produk->id_produk }})" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-50 text-violet-600 flex flex-shrink-0 items-center justify-center hover:bg-violet-600 hover:text-white transition-colors" title="Tambah ke Keranjang">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             </button>
                         </div>
                     </div>
-                </div>
+
+                {{-- ✅ DIUBAH: penutup </div> menjadi </a> --}}
+                </a>
+
                 @endforeach
             </div>
             @else
@@ -210,45 +226,43 @@
     </section>
 
     <!-- 6. CTA RESELLER -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl bg-gradient-to-r from-pink-400 to-orange-300 p-8 md:p-12 shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
-            <div class="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-20 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-white opacity-20 rounded-full blur-3xl"></div>
-            <div class="relative z-10 md:w-2/3 text-center md:text-left">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Bergabung Menjadi Reseller Kami!</h2>
-                <p class="text-white/90 text-lg mb-8 max-w-xl mx-auto md:mx-0">Dapatkan harga khusus, materi promosi eksklusif, dan mulai bangun bisnis aksesorismu sendiri bersama Pelangi Accessories.</p>
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="rounded-2xl bg-gradient-to-r from-pink-400 to-orange-300 p-8 md:p-12 shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-white opacity-20 rounded-full blur-3xl"></div>
+                <div class="relative z-10 md:w-2/3 text-center md:text-left">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Bergabung Menjadi Reseller Kami!</h2>
+                    <p class="text-white/90 text-lg mb-8 max-w-xl mx-auto md:mx-0">Dapatkan harga khusus, materi promosi eksklusif, dan mulai bangun bisnis aksesorismu sendiri bersama Pelangi Accessories.</p>
 
-                {{-- ▼ TOMBOL YANG DIUBAH ▼ --}}
-                @auth
-                    @if(auth()->user()->role === 'reseller')
-                        <a href="{{ route('reseller.dashboard') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
-                            Dashboard Reseller
-                        </a>
-                    @else
-                        <a href="{{ route('reseller.register.form') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
+                    @auth
+                        @if(auth()->user()->role === 'reseller')
+                            <a href="{{ route('reseller.dashboard') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
+                                Dashboard Reseller
+                            </a>
+                        @else
+                            <a href="{{ route('reseller.register.form') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
+                                Daftar Sekarang
+                            </a>
+                        @endif
+                    @endauth
+
+                    @guest
+                        <a href="{{ route('login') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
                             Daftar Sekarang
                         </a>
-                    @endif
-                @endauth
-
-                @guest
-                    <a href="{{ route('login') }}" class="inline-block bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all">
-                        Daftar Sekarang
-                    </a>
-                    <p class="text-white/80 text-sm mt-3">*Anda harus login terlebih dahulu untuk mendaftar</p>
-                @endguest
-                {{-- ▲ AKHIR TOMBOL ▲ --}}
-            </div>
-            <div class="relative z-10 md:w-1/3 flex justify-center md:justify-end">
-                <div class="bg-white rounded-xl p-8 text-center shadow-lg transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 w-full max-w-sm">
-                    <span class="block text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-300 mb-2">200+</span>
-                    <span class="text-gray-600 font-medium">Reseller telah bergabung dan sukses di seluruh Indonesia</span>
+                        <p class="text-white/80 text-sm mt-3">*Anda harus login terlebih dahulu untuk mendaftar</p>
+                    @endguest
+                </div>
+                <div class="relative z-10 md:w-1/3 flex justify-center md:justify-end">
+                    <div class="bg-white rounded-xl p-8 text-center shadow-lg transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 w-full max-w-sm">
+                        <span class="block text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-300 mb-2">200+</span>
+                        <span class="text-gray-600 font-medium">Reseller telah bergabung dan sukses di seluruh Indonesia</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- 7. TESTIMONI -->
     <section class="py-16 bg-gray-50">
@@ -345,5 +359,86 @@
         </div>
     </footer>
 
+    <script>
+        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            || document.querySelector('input[name="_token"]')?.value;
+
+        let toastTimeout;
+        function showToast(message, type = 'success') {
+            let toast = document.getElementById('homeToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'homeToast';
+                toast.className = 'fixed top-6 right-6 z-[100] transform translate-x-[120%] transition-transform duration-300 ease-out';
+                toast.innerHTML = `
+                    <div class="bg-white border border-gray-200 shadow-2xl rounded-xl px-5 py-4 flex items-center gap-3 max-w-sm">
+                        <div id="homeToastIcon" class="flex-shrink-0"></div>
+                        <p id="homeToastMsg" class="text-sm font-medium text-gray-700"></p>
+                    </div>`;
+                document.body.appendChild(toast);
+            }
+            const iconEl = document.getElementById('homeToastIcon');
+            const msgEl  = document.getElementById('homeToastMsg');
+            msgEl.textContent = message;
+
+            const icons = {
+                success: '<div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>',
+                error:   '<div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>',
+                info:    '<div class="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>',
+            };
+            iconEl.innerHTML = icons[type] || icons.success;
+
+            toast.classList.remove('translate-x-[120%]');
+            toast.classList.add('translate-x-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-x-0');
+                toast.classList.add('translate-x-[120%]');
+            }, 3000);
+        }
+
+        function updateCartBadge(count) {
+            const badge = document.getElementById('navCartBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function addToCartFromHome(produkId) {
+            @guest
+            showToast('Silakan login terlebih dahulu.', 'info');
+            setTimeout(() => { window.location.href = '{{ route("login") }}'; }, 1500);
+            return;
+            @endguest
+
+            fetch('{{ route("keranjang.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    id_produk: produkId,
+                    kuantitas: 1,
+                    id_varian: null,
+                }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    updateCartBadge(data.total_items);
+                } else {
+                    showToast(data.message || 'Gagal.', 'error');
+                }
+            })
+            .catch(() => showToast('Terjadi kesalahan.', 'error'));
+        }
+    </script>
 </body>
 </html>

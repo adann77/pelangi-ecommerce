@@ -9,12 +9,17 @@ use Illuminate\View\View;
 
 class KatalogController extends Controller
 {
+    /**
+     * Menampilkan halaman katalog produk (dengan filter & search).
+     */
     public function index(Request $request): View
     {
         $kategoris = Kategori::orderBy('nama_kategori')->get();
         $maxPriceLimit = (int) (Produk::max('harga') ?? 500000);
 
-        $query = Produk::with('kategori')
+        // ✅ FIX: Tambah with('varians') agar accessor gambar_url
+        //    bisa pakai eager-load tanpa N+1 query
+        $query = Produk::with('kategori', 'varians')
             ->withAvg('ratings', 'rating')
             ->withCount('ratings');
 
@@ -69,6 +74,43 @@ class KatalogController extends Controller
 
         return view('katalog', compact(
             'kategoris', 'produks', 'maxPriceLimit', 'selectedKategori'
+        ));
+    }
+
+    /**
+     * Menampilkan halaman detail produk.
+     */
+    public function detail($id): View
+    {
+        // Ambil produk beserta relasi kategori dan rating (beserta user-nya)
+        $produk = Produk::with(['kategori', 'ratings.user', 'gambars', 'varians'])->findOrFail($id);
+
+        // ✅ FIX: Eager-load varians untuk produk terkait juga
+        $relatedProduks = Produk::with('kategori', 'varians')
+            ->where('id_kategori', $produk->id_kategori)
+            ->where('id_produk', '!=', $produk->id_produk)
+            ->inRandomOrder()
+            ->take(4)
+            ->get();
+
+        // Hitung rata-rata rating
+        $avgRating = $produk->ratings->avg('rating') ?? 0;
+
+        // Hitung total review
+        $totalReviews = $produk->ratings->count();
+
+        // Hitung distribusi rating (untuk bar chart bintang 5-1)
+        $ratingDistribution = [];
+        for ($i = 5; $i >= 1; $i--) {
+            $ratingDistribution[$i] = $produk->ratings->where('rating', $i)->count();
+        }
+
+        return view('detail', compact(
+            'produk',
+            'relatedProduks',
+            'avgRating',
+            'totalReviews',
+            'ratingDistribution'
         ));
     }
 }
