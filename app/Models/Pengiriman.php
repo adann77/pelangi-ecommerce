@@ -9,6 +9,11 @@ class Pengiriman extends Model
 {
     protected $table = 'pengiriman';
 
+    // ★ FIX: Tambahkan primary key karena bukan 'id'
+    protected $primaryKey = 'id_pengiriman';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'pesanan_id',
         'kurir',
@@ -39,7 +44,6 @@ class Pengiriman extends Model
     /* ───── Relasi ───── */
     public function pesanan(): BelongsTo
     {
-        // FIX: specify foreign key & owner key karena Pesanan pakai id_pesanan
         return $this->belongsTo(Pesanan::class, 'pesanan_id', 'id_pesanan');
     }
 
@@ -98,24 +102,18 @@ class Pengiriman extends Model
         return 'Rp ' . number_format($this->ongkir, 0, ',', '.');
     }
 
-    /**
-     * Warna Tailwind berdasarkan nama kurir
-     */
     public function getKurirColorAttribute(): string
     {
         return match ($this->kurir) {
             'JNE'      => 'red',
             'J&T'      => 'orange',
             'SiCepat'  => 'purple',
-            'AnterAja'  => 'green',
+            'AnterAja' => 'green',
             'Tiki'     => 'blue',
             default    => 'gray',
         };
     }
 
-    /**
-     * Badge CSS class berdasarkan status pengiriman
-     */
     public function getPengirimanStatusBadgeAttribute(): string
     {
         return match ($this->status) {
@@ -126,9 +124,6 @@ class Pengiriman extends Model
         };
     }
 
-    /**
-     * Dot CSS class berdasarkan status pengiriman
-     */
     public function getPengirimanStatusDotAttribute(): string
     {
         return match ($this->status) {
@@ -139,17 +134,11 @@ class Pengiriman extends Model
         };
     }
 
-    /**
-     * Label status pengiriman
-     */
     public function getPengirimanStatusLabelAttribute(): string
     {
         return self::statusList()[$this->status] ?? $this->status;
     }
 
-    /**
-     * Inisial nama untuk avatar (Budi Santoso → BS)
-     */
     public function getInisialPelangganAttribute(): string
     {
         $name = $this->pesanan?->user?->name ?? '';

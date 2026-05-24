@@ -23,20 +23,38 @@
         ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
 
-        /* Custom Styling for Radio Buttons */
         .radio-card input[type="radio"]:checked + label {
-            border-color: #8b5cf6; /* violet-500 */
-            background-color: #f5f3ff; /* violet-50 */
+            border-color: #8b5cf6;
+            background-color: #f5f3ff;
             color: #7c3aed;
         }
         .radio-card input[type="radio"]:checked + label .radio-dot {
             background-color: #8b5cf6;
             box-shadow: 0 0 0 3px white, 0 0 0 5px #8b5cf6;
         }
+
+        /* Toast notification */
+        .toast-enter {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        .toast-exit {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(100%); opacity: 0; }
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 font-sans text-gray-800 antialiased selection:bg-violet-200 selection:text-violet-800 flex flex-col min-h-screen">
+
+    <!-- ==================== TOAST CONTAINER ==================== -->
+    <div id="toastContainer" class="fixed top-6 right-6 z-[9999] space-y-3"></div>
 
     <!-- ==================== NAVBAR ==================== -->
     <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
@@ -59,7 +77,7 @@
                     </a>
                     @auth
                     <div class="hidden sm:flex items-center space-x-4">
-                        <a href="/dashboard" class="text-violet-600 hover:text-pink-400 font-medium transition-colors">{{ auth()->user()->name }}</a>
+                        <a href="/dashboard" class="text-violet-600 hover:text-pink-400 font-medium transition-colors">{{ auth()->user()->nama }}</a>
                         <form id="logout-checkout" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
                     </div>
                     @endauth
@@ -102,15 +120,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penerima <span class="text-red-500">*</span></label>
-                                <input type="text" name="nama_penerima" value="{{ auth()->user()->name ?? '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all" placeholder="Nama lengkap">
+                                <input type="text" name="nama_penerima" value="{{ auth()->user()->nama ?? '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all" placeholder="Nama lengkap">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">No. Telepon <span class="text-red-500">*</span></label>
-                                <input type="tel" name="no_telepon" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all" placeholder="08xxxxxxxxxx">
+                                <input type="tel" name="no_telepon" value="{{ auth()->user()->no_hp ?? '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all" placeholder="08xxxxxxxxxx">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap <span class="text-red-500">*</span></label>
-                                <textarea name="alamat_lengkap" rows="3" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all resize-none" placeholder="Nama jalan, nomor rumah, RT/RW, Kelurahan, Kecamatan"></textarea>
+                                <textarea name="alamat_lengkap" rows="3" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all resize-none" placeholder="Nama jalan, nomor rumah, RT/RW, Kelurahan, Kecamatan">{{ auth()->user()->alamat ?? '' }}</textarea>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kota <span class="text-red-500">*</span></label>
@@ -131,8 +149,8 @@
                         </h2>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="radio-card">
-                                <input type="radio" name="kurir" value="JNE" class="hidden" required checked>
-                                <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
+                                <input type="radio" name="kurir" id="kurir_jne" value="JNE" class="sr-only" required checked>
+                                <label for="kurir_jne" class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
                                     <div>
                                         <p class="font-bold text-gray-800">JNE</p>
                                         <p class="text-xs text-gray-500 mt-1">Estimasi 2-3 hari</p>
@@ -141,8 +159,8 @@
                                 </label>
                             </div>
                             <div class="radio-card">
-                                <input type="radio" name="kurir" value="J&T" class="hidden">
-                                <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
+                                <input type="radio" name="kurir" id="kurir_jnt" value="J&T" class="sr-only">
+                                <label for="kurir_jnt" class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
                                     <div>
                                         <p class="font-bold text-gray-800">J&T</p>
                                         <p class="text-xs text-gray-500 mt-1">Estimasi 2-4 hari</p>
@@ -151,8 +169,8 @@
                                 </label>
                             </div>
                             <div class="radio-card">
-                                <input type="radio" name="kurir" value="SiCepat" class="hidden">
-                                <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
+                                <input type="radio" name="kurir" id="kurir_sicepat" value="SiCepat" class="sr-only">
+                                <label for="kurir_sicepat" class="border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all hover:border-violet-300">
                                     <div>
                                         <p class="font-bold text-gray-800">SiCepat</p>
                                         <p class="text-xs text-gray-500 mt-1">Estimasi 1-2 hari</p>
@@ -163,7 +181,7 @@
                         </div>
                     </div>
 
-                    {{-- Metode Pembayaran --}}
+                    {{-- Metode Pembayaran — HANYA QRIS AKTIF --}}
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                         <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                             <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
@@ -171,76 +189,84 @@
                         </h2>
 
                         <div class="space-y-6">
-                            {{-- Virtual Account --}}
+                            {{-- ★ QRIS — SATU-SATUNYA YANG AKTIF ★ --}}
                             <div>
-                                <p class="text-sm font-semibold text-gray-500 mb-3">Virtual Account / Transfer Bank</p>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <p class="text-sm font-semibold text-gray-500 mb-3">Scan QR Code (QRIS)</p>
+                                <div class="grid grid-cols-1 gap-3">
                                     <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="BCA" class="hidden" required>
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">BCA</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">BCA</p>
-                                                <p class="text-[10px] text-gray-500">Virtual Account</p>
+                                        <input type="radio" name="metode_pembayaran" id="pay_qris" value="QRIS" class="sr-only" required checked>
+                                        <label for="pay_qris" class="border-2 border-violet-500 bg-violet-50 rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-all">
+                                            <div class="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center">
+                                                <svg class="w-7 h-7 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                             </div>
-                                        </label>
-                                    </div>
-                                    <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="BRI" class="hidden">
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-900 font-bold text-xs">BRI</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">BRI</p>
-                                                <p class="text-[10px] text-gray-500">Virtual Account</p>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-bold text-violet-700">QRIS — Scan QR Code</p>
+                                                <p class="text-xs text-violet-500 mt-0.5">Didukung semua e-wallet & mobile banking</p>
                                             </div>
-                                        </label>
-                                    </div>
-                                    <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="Mandiri" class="hidden">
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-700 font-bold text-[10px]">MDR</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">Mandiri</p>
-                                                <p class="text-[10px] text-gray-500">Virtual Account</p>
-                                            </div>
+                                            <div class="radio-dot w-4 h-4 rounded-full border-2 border-white transition-all" style="background-color:#8b5cf6;box-shadow:0 0 0 3px white,0 0 0 5px #8b5cf6;"></div>
                                         </label>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- E-Wallet --}}
+                            {{-- Virtual Account — DISABLED --}}
+                            <div>
+                                <p class="text-sm font-semibold text-gray-500 mb-3">Virtual Account / Transfer Bank</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div onclick="showUnavailableToast('BCA Virtual Account')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">BCA</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">BCA</p>
+                                            <p class="text-[10px] text-gray-400">Virtual Account</p>
+                                        </div>
+                                    </div>
+                                    <div onclick="showUnavailableToast('BRI Virtual Account')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-900 font-bold text-xs">BRI</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">BRI</p>
+                                            <p class="text-[10px] text-gray-400">Virtual Account</p>
+                                        </div>
+                                    </div>
+                                    <div onclick="showUnavailableToast('Mandiri Virtual Account')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-700 font-bold text-[10px]">MDR</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">Mandiri</p>
+                                            <p class="text-[10px] text-gray-400">Virtual Account</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- E-Wallet — DISABLED --}}
                             <div>
                                 <p class="text-sm font-semibold text-gray-500 mb-3">E-Wallet (Dompet Digital)</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="GoPay" class="hidden">
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600 font-bold text-xs">GP</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">GoPay</p>
-                                                <p class="text-[10px] text-gray-500">E-Wallet</p>
-                                            </div>
-                                        </label>
+                                    <div onclick="showUnavailableToast('GoPay')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600 font-bold text-xs">GP</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">GoPay</p>
+                                            <p class="text-[10px] text-gray-400">E-Wallet</p>
+                                        </div>
                                     </div>
-                                    <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="OVO" class="hidden">
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 font-bold text-xs">OVO</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">OVO</p>
-                                                <p class="text-[10px] text-gray-500">E-Wallet</p>
-                                            </div>
-                                        </label>
+                                    <div onclick="showUnavailableToast('OVO')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 font-bold text-xs">OVO</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">OVO</p>
+                                            <p class="text-[10px] text-gray-400">E-Wallet</p>
+                                        </div>
                                     </div>
-                                    <div class="radio-card">
-                                        <input type="radio" name="metode_pembayaran" value="DANA" class="hidden">
-                                        <label class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:border-violet-300">
-                                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500 font-bold text-xs">DANA</div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-800">DANA</p>
-                                                <p class="text-[10px] text-gray-500">E-Wallet</p>
-                                            </div>
-                                        </label>
+                                    <div onclick="showUnavailableToast('DANA')" class="border-2 border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed opacity-50 hover:opacity-70 transition-all relative overflow-hidden">
+                                        <span class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Segera Hadir</span>
+                                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500 font-bold text-xs">DANA</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-500">DANA</p>
+                                            <p class="text-[10px] text-gray-400">E-Wallet</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -257,7 +283,6 @@
 
                         <h2 class="text-lg font-bold text-gray-900 mb-6">Ringkasan Pesanan</h2>
 
-                        {{-- List Item --}}
                         <div class="space-y-4 max-h-72 overflow-y-auto pr-2 mb-6 border-b border-gray-100 pb-4">
                             @foreach($keranjang->details as $detail)
                             @php
@@ -288,6 +313,13 @@
                                 <span class="font-semibold text-gray-700" id="shippingCostDisplay">Rp 15.000</span>
                                 <input type="hidden" name="ongkir" value="15000" id="shippingCostInput">
                             </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500">Metode Bayar</span>
+                                <span class="font-semibold text-violet-600 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                    QRIS
+                                </span>
+                            </div>
                         </div>
 
                         <hr class="my-5 border-gray-100">
@@ -297,15 +329,18 @@
                             <span class="text-xl font-extrabold text-violet-600" id="summaryTotal">Rp {{ number_format(($keranjang->total_harga ?? 0) + 15000, 0, ',', '.') }}</span>
                         </div>
 
-                        <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-pink-500 text-white rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all shadow-md shadow-violet-500/20 text-sm">
-                            Bayar Sekarang
+                        <button type="submit" id="btnCheckout" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-pink-500 text-white rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all shadow-md shadow-violet-500/20 text-sm flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 hidden animate-spin" id="spinner" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="btnText">Bayar dengan QRIS</span>
                         </button>
 
                         <a href="{{ route('keranjang.index') }}" class="block text-center mt-4 text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors">
                             ← Kembali ke Keranjang
                         </a>
 
-                        {{-- Trust badges --}}
                         <div class="mt-6 pt-5 border-t border-gray-100 space-y-3">
                             <div class="flex items-center gap-3 text-xs text-gray-400">
                                 <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -341,26 +376,63 @@
         // Format Currency Helper
         const formatRupiah = (angka) => 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-        // Base Subtotal from PHP
         const baseSubtotal = {{ $keranjang->total_harga ?? 0 }};
 
-        // Define Ongkir per Kurir
         const ongkirMapping = {
             'JNE': 15000,
             'J&T': 18000,
             'SiCepat': 17000
         };
 
-        // Listen to kurir change to update ongkir dynamically
+        // Listen to kurir change
         document.querySelectorAll('input[name="kurir"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const ongkir = ongkirMapping[this.value] || 15000;
-
-                // Update UI & Hidden Input
                 document.getElementById('shippingCostDisplay').innerText = formatRupiah(ongkir);
                 document.getElementById('shippingCostInput').value = ongkir;
                 document.getElementById('summaryTotal').innerText = formatRupiah(baseSubtotal + ongkir);
             });
+        });
+
+        // ★ Toast Notification for Unavailable Payment Methods
+        function showUnavailableToast(methodName) {
+            const container = document.getElementById('toastContainer');
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast-enter flex items-center gap-3 bg-white border border-amber-200 shadow-lg rounded-xl px-5 py-4 min-w-[300px] max-w-sm';
+            toast.innerHTML = `
+                <div class="flex-shrink-0 w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-gray-800">${methodName}</p>
+                    <p class="text-xs text-amber-600 mt-0.5">Metode pembayaran ini belum tersedia. Silakan gunakan QRIS.</p>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Anti Double Click & Loading Spinner
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('btnCheckout');
+            const spinner = document.getElementById('spinner');
+            const text = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            
+            spinner.classList.remove('hidden');
+            text.innerText = 'Memproses Pesanan...';
         });
     </script>
 

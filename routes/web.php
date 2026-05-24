@@ -16,6 +16,9 @@ use App\Http\Controllers\admin\UserController;
 use App\Http\Controllers\admin\LaporanController;
 use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\CheckOutController;
+use App\Http\Controllers\admin\ResellerController as AdminResellerController;
+use App\Http\Controllers\PembayaranController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/keranjang-clear',  [KeranjangController::class, 'clear'  ])->name('keranjang.clear');
 
     Route::get('/checkout', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::get('/pembayaran/{id_pesanan}', [PembayaranController::class, 'show'])->name('pembayaran.show');
     Route::post('/checkout/process', [CheckOutController::class, 'process'])->name('checkout.process');
 });
 
@@ -121,7 +125,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/reseller/{id}',           [ResellerController::class, 'show'   ])->name('reseller.show');
     Route::put('/reseller/{id}/approve',   [ResellerController::class, 'approve'])->name('reseller.approve');
     Route::put('/reseller/{id}/reject',    [ResellerController::class, 'reject' ])->name('reseller.reject');
-
+    Route::put('/admin/reseller/{id_user}/approve', [AdminResellerController::class, 'approve'])->name('admin.reseller.approve');
+    Route::put('/admin/reseller/{id_user}/reject', [AdminResellerController::class, 'reject'])->name('admin.reseller.reject');
     // ── User Management ──
     Route::get   ('/users',                    [UserController::class, 'index'      ])->name('users.index');
     Route::post  ('/users',                    [UserController::class, 'store'      ])->name('users.store');
@@ -131,6 +136,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // ── Laporan ──
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
+    
+    
 });
 
 /*

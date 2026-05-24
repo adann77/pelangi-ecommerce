@@ -11,13 +11,25 @@ class Pesanan extends Model
 
     protected $table = 'pesanan';
     protected $primaryKey = 'id_pesanan';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
+    // protected $fillable = [
+    //     'id_user',
+    //     'total_harga',
+    //     'status_pesanan',
+    //     'tanggal_pesanan',
+    // ];
     protected $fillable = [
         'id_user',
         'total_harga',
         'status_pesanan',
         'tanggal_pesanan',
-        // ... kolom lainnya
+        'alamat_pengiriman',
+        'layanan_kurir',
+        'kode_kurir',
+        'ongkir',
+        'nomor_resi',
     ];
 
     protected $casts = [
@@ -25,30 +37,64 @@ class Pesanan extends Model
     ];
 
     // ========== RELATIONSHIPS ==========
-    
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
-    }
-
-    // ... relasi lainnya ...
-
-    // =========================================================
-    // TAMBAHKAN SCOPE-SCOPE BERIKUT INI
-    // =========================================================
 
     /**
-     * Scope: Hanya pesanan yang relevan untuk halaman pengiriman
-     * (sudah dibayar, diproses, dikirim, atau selesai)
+     * Pesanan dimiliki oleh satu User
      */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user', 'id');
+    }
+
+    /**
+     * Pesanan punya banyak DetailPesanan
+     */
+    public function details()
+    {
+        return $this->hasMany(DetailPesanan::class, 'id_pesanan', 'id_pesanan');
+    }
+
+    /**
+     * Pesanan punya satu Pembayaran
+     */
+    public function pembayaran()
+    {
+        return $this->hasOne(Pembayaran::class, 'id_pesanan', 'id_pesanan');
+    }
+
+    /**
+     * Pesanan punya satu Pengiriman
+     */
+    public function pengiriman()
+    {
+        return $this->hasOne(Pengiriman::class, 'pesanan_id', 'id_pesanan');
+    }
+
+    // ========== ACCESSOR ==========
+
+    /**
+     * Format total harga ke Rupiah
+     */
+    public function getTotalHargaFormatAttribute()
+    {
+        return 'Rp ' . number_format($this->total_harga, 0, ',', '.');
+    }
+
+    /**
+     * Format Order ID
+     */
+    public function getOrderIdFormatAttribute()
+    {
+        return 'PLG-' . str_pad($this->id_pesanan, 4, '0', STR_PAD_LEFT);
+    }
+
+    // ========== SCOPES ==========
+
     public function scopeForPengiriman($query)
     {
         return $query->whereIn('status_pesanan', ['dibayar', 'diproses', 'dikirim', 'selesai']);
     }
 
-    /**
-     * Scope: Cari berdasarkan ID pesanan atau nama/email pelanggan
-     */
     public function scopeSearchPengiriman($query, $search)
     {
         if (!empty($search)) {
@@ -63,9 +109,6 @@ class Pesanan extends Model
         return $query;
     }
 
-    /**
-     * Scope: Filter berdasarkan status pengiriman
-     */
     public function scopeFilterStatusPengiriman($query, $status)
     {
         if (!empty($status)) {
@@ -74,25 +117,16 @@ class Pesanan extends Model
         return $query;
     }
 
-    /**
-     * Scope: Pesanan yang perlu dikirim (sudah dibayar/diproses)
-     */
     public function scopePerluDikirim($query)
     {
         return $query->whereIn('status_pesanan', ['dibayar', 'diproses']);
     }
 
-    /**
-     * Scope: Pesanan yang sedang dalam perjalanan
-     */
     public function scopeDalamPerjalanan($query)
     {
         return $query->where('status_pesanan', 'dikirim');
     }
 
-    /**
-     * Scope: Pesanan yang sudah selesai dikirim
-     */
     public function scopeSelesaiPengiriman($query)
     {
         return $query->where('status_pesanan', 'selesai');

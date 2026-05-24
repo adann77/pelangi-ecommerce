@@ -26,7 +26,7 @@
             
             <!-- Nama Pengguna (Menggantikan Logo Bulat) -->
             <div class="mb-10 px-2">
-                <h2 class="text-2xl font-bold text-violet-800">Pelanggan</h2>
+                <h2 class="text-2xl font-bold text-violet-800">Reseller</h2>
                 <p class="text-sm text-violet-500 mt-1 truncate">{{ auth()->user()->name ?? auth()->user()->nama ?? 'User' }}</p>
             </div>
 
@@ -57,10 +57,10 @@
                 </a>
 
             <!-- Ajukan Reseller -->
-            <a href="{{ route('reseller.register.form') }}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-violet-100 rounded-lg transition-colors">
+            <!-- <a href="{{ route('reseller.register.form') }}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-violet-100 rounded-lg transition-colors">
                 <iconify-icon icon="lucide:user-plus" class="text-xl text-violet-500"></iconify-icon>
                 Ajukan Reseller
-            </a>
+            </a> -->
 
             <!-- Logout -->
             <div class="mt-auto pt-6 border-t border-violet-200">

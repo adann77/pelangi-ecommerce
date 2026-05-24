@@ -1,49 +1,5 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Auth;
-
-// class CheckOutController extends Controller
-// {
-//     public function index()
-//     {
-//         $user = Auth::user();
-        
-//         // Ambil keranjang user yang sedang login
-//         $keranjang = $user->keranjang()->with('details.produk', 'details.varian')->first();
-
-//         // Jika keranjang kosong, redirect kembali ke keranjang dengan pesan error
-//         if (!$keranjang || $keranjang->details->count() === 0) {
-//             return redirect()->route('keranjang.index')->with('error', 'Keranjang Anda kosong, silakan tambahkan produk terlebih dahulu.');
-//         }
-
-//         return view('checkout', compact('keranjang'));
-//     }
-
-//     public function process(Request $request)
-//     {
-//         // Validasi input
-//         $request->validate([
-//             'nama_penerima' => 'required|string|max:255',
-//             'no_telepon' => 'required|string|max:20',
-//             'alamat_lengkap' => 'required|string',
-//             'kota' => 'required|string|max:100',
-//             'kode_pos' => 'required|string|max:10',
-//             'metode_pembayaran' => 'required|string',
-//             'kurir' => 'required|string',
-//         ]);
-
-//         // TODO: Logika menyimpan ke database (tabel orders/order_items)
-//         // TODO: Kurangi stok produk
-//         // TODO: Kosongkan keranjang setelah checkout berhasil
-
-//         return redirect()->route('home')->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
-//     }
-// }
-
-
 namespace App\Http\Controllers;
 
 use App\Models\Keranjang;
@@ -61,10 +17,8 @@ class CheckOutController extends Controller
     {
         $user = Auth::user();
         
-        // Ambil keranjang beserta relasi detail, produk, dan varian
         $keranjang = $user->keranjang()->with('details.produk', 'details.varian')->first();
 
-        // Jika keranjang kosong, kembalikan ke halaman keranjang
         if (!$keranjang || $keranjang->details->isEmpty()) {
             return redirect()->route('keranjang.index')->with('error', 'Keranjang Anda kosong!');
         }
@@ -74,14 +28,14 @@ class CheckOutController extends Controller
 
     public function process(Request $request)
     {
-        // Validasi input
+        // Validasi input — metode_pembayaran hanya menerima QRIS
         $request->validate([
             'nama_penerima' => 'required|string|max:255',
             'no_telepon' => 'required|string|max:20',
             'alamat_lengkap' => 'required|string',
             'kota' => 'required|string|max:100',
             'kode_pos' => 'required|string|max:10',
-            'metode_pembayaran' => 'required|string',
+            'metode_pembayaran' => 'required|string|in:QRIS',
             'kurir' => 'required|string',
             'ongkir' => 'required|numeric',
         ]);
@@ -93,42 +47,74 @@ class CheckOutController extends Controller
             return redirect()->route('keranjang.index')->with('error', 'Keranjang kosong!');
         }
 
-        // Hitung total belanja
         $totalHarga = $keranjang->details->sum(function ($detail) {
             return $detail->kuantitas * ($detail->produk->harga ?? 0);
         });
 
         $totalBesar = $totalHarga + $request->ongkir;
 
-        // Gunakan DB Transaction untuk menjaga integritas data
         try {
             DB::beginTransaction();
 
             // 1. Buat Pesanan
-            $pesanan = Pesanan::create([
-                'id_user' => $user->id,
-                'total_harga' => $totalBesar,
-                'status_pesanan' => 'menunggu_pembayaran', // Sesuaikan dengan enum/migrasi Anda
-            ]);
+            // $pesanan = Pesanan::create([
+            //     'id_user' => $user->id,
+            //     'total_harga' => $totalBesar,
+            //     'status_pesanan' => 'menunggu_pembayaran',
+            // ]);
 
+            // 1. Buat Pesanan
+          $alamatLengkap = $request->nama_penerima . ' | ' 
+            . $request->no_telepon . ' | ' 
+            . $request->alamat_lengkap . ', ' 
+            . $request->kota . ' ' 
+            . $request->kode_pos;
+
+        $pesanan = Pesanan::create([
+            'id_user'           => $user->id_user,
+            'total_harga'       => $totalBesar,
+            'status_pesanan'    => 'menunggu_pembayaran',
+            'alamat_pengiriman' => $alamatLengkap,
+            'layanan_kurir'     => $request->kurir,
+            'ongkir'            => $request->ongkir,
+        ]);
             // 2. Simpan Detail Pesanan & Kurangi Stok
+            // foreach ($keranjang->details as $detail) {
+            //     DetailPesanan::create([
+            //         'id_pesanan' => $pesanan->id_pesanan,
+            //         'id_produk' => $detail->id_produk,
+            //         'id_varian' => $detail->id_varian,
+            //         'kuantitas' => $detail->kuantitas,
+            //         'harga' => $detail->produk->harga ?? 0,
+            //     ]);
+
+            //     if ($detail->varian) {
+            //         $detail->varian->decrement('stok_varian', $detail->kuantitas);
+            //     } else if($detail->produk) {
+            //         $detail->produk->decrement('stok', $detail->kuantitas);
+            //     }
+            // }
+
             foreach ($keranjang->details as $detail) {
-                DetailPesanan::create([
-                    'id_pesanan' => $pesanan->id_pesanan,
-                    'id_produk' => $detail->id_produk,
-                    'id_varian' => $detail->id_varian,
-                    'kuantitas' => $detail->kuantitas,
-                    'harga' => $detail->produk->harga ?? 0,
-                ]);
+    $harga = $detail->produk->harga ?? 0;
+    $qty   = $detail->kuantitas;
 
-                // Kurangi stok varian jika ada
-                if ($detail->varian) {
-                    $detail->varian->decrement('stok_varian', $detail->kuantitas);
-                } else if($detail->produk) {
-                    $detail->produk->decrement('stok', $detail->kuantitas);
-                }
-            }
+    DetailPesanan::create([
+        'id_pesanan'   => $pesanan->id_pesanan,
+        'id_produk'    => $detail->id_produk,
+        'id_varian'    => $detail->id_varian ?? null,
+        'harga_satuan' => $harga,           // ← nama kolom yang benar
+        'kuantitas'    => $qty,
+        'subtotal'     => $harga * $qty,    // ← hitung subtotal
+    ]);
 
+    // Kurangi stok
+    if ($detail->varian) {
+        $detail->varian->decrement('stok_varian', $qty);
+    } elseif ($detail->produk) {
+        $detail->produk->decrement('stok', $qty);
+    }
+}
             // 3. Simpan Data Pengiriman
             Pengiriman::create([
                 'pesanan_id' => $pesanan->id_pesanan,
@@ -137,10 +123,10 @@ class CheckOutController extends Controller
                 'status' => Pengiriman::STATUS_PERLU_DIKIRIM,
             ]);
 
-            // 4. Simpan Data Pembayaran
+            // 4. Simpan Data Pembayaran — Selalu QRIS
             Pembayaran::create([
                 'id_pesanan' => $pesanan->id_pesanan,
-                'metode_pembayaran' => $request->metode_pembayaran,
+                'metode_pembayaran' => 'QRIS',
                 'status_pembayaran' => 'pending',
             ]);
 
@@ -149,7 +135,8 @@ class CheckOutController extends Controller
 
             DB::commit();
 
-            return redirect()->route('home')->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
+            return redirect()->route('pembayaran.show', $pesanan->id_pesanan)
+                ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran via QRIS.');
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -31,22 +31,40 @@ class ResellerController extends Controller
         return response()->json($reseller);
     }
 
+    // public function approve($id)
+    // {
+    //     $reseller = User::findOrFail($id);
+    //     $reseller->status_reseller = 'approved';
+    //     $reseller->role = 'reseller';
+    //     $reseller->save();
+
+    //     return redirect()->back()->with('success', 'Reseller berhasil disetujui!');
+    // }
+
     public function approve($id)
     {
-        $reseller = User::findOrFail($id);
-        $reseller->status_reseller = 'approved';
-        $reseller->role = 'reseller';
-        $reseller->save();
-
-        return redirect()->back()->with('success', 'Reseller berhasil disetujui!');
+        $user = \App\Models\User::findOrFail($id);
+        $user->update([
+            'role'            => 'reseller',   // ← role baru berubah di sini
+            'status_reseller' => 'approved',
+        ]);
+        return back()->with('success', 'Pendaftaran reseller disetujui.');
     }
+    // public function reject($id)
+    // {
+    //     $reseller = User::findOrFail($id);
+    //     $reseller->status_reseller = 'rejected';
+    //     $reseller->save();
 
+    //     return redirect()->back()->with('success', 'Pendaftar reseller berhasil ditolak.');
+    // }
     public function reject($id)
     {
-        $reseller = User::findOrFail($id);
-        $reseller->status_reseller = 'rejected';
-        $reseller->save();
-
-        return redirect()->back()->with('success', 'Pendaftar reseller berhasil ditolak.');
+        $user = \App\Models\User::findOrFail($id);
+        $user->update([
+            'role'            => 'customer',   // tetap customer
+            'status_reseller' => 'rejected',
+        ]);
+        return back()->with('success', 'Pendaftaran reseller ditolak.');
     }
 }

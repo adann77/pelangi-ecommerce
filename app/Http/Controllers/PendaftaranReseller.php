@@ -25,7 +25,7 @@ class PendaftaranReseller extends Controller
     /**
      * Simpan data pendaftaran reseller
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
         $user = auth()->user();
 
@@ -34,30 +34,28 @@ class PendaftaranReseller extends Controller
             return redirect()->route('reseller.dashboard');
         }
 
-        // ▼ VALIDASI HANYA 3 FIELD INI ▼
         $validated = $request->validate([
             'no_hp'             => 'required|string|max:15',
             'alamat'            => 'required|string',
-            'bukti_pembayaran'  => 'required|image|mimes:jpg,jpeg,png|max:5120', // ← DIUBAH: 5120 KB = 5MB
+            'bukti_pembayaran'  => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ], [
             'no_hp.required'            => 'No. HP wajib diisi.',
             'alamat.required'           => 'Alamat lengkap wajib diisi.',
             'bukti_pembayaran.required' => 'Bukti pembayaran wajib diunggah.',
             'bukti_pembayaran.image'    => 'File harus berupa gambar.',
             'bukti_pembayaran.mimes'    => 'Format file harus JPG, JPEG, atau PNG.',
-            'bukti_pembayaran.max'      => 'Ukuran file maksimal 5MB.', // ← DIUBAH: Pesan error
+            'bukti_pembayaran.max'      => 'Ukuran file maksimal 5MB.',
         ]);
 
-        // Upload bukti pembayaran ke storage/app/public/bukti_pembayaran
         $buktiPath = $request->file('bukti_pembayaran')->store('bukti_pembayaran', 'public');
 
-        // Update data user yang sedang login
+        // ▼ DIUBAH: Role tetap 'customer', status_reseller menjadi 'pending' (Di Proses)
         $user->update([
             'no_hp'            => $validated['no_hp'],
             'alamat'           => $validated['alamat'],
             'bukti_pembayaran' => $buktiPath,
-            'role'             => 'reseller',          // Ubah role menjadi reseller
-            'status_reseller'  => 'approved',          // Langsung approved
+            'role'             => 'customer',   // Tetap customer
+            'status_reseller'  => 'pending',    // Menunggu persetujuan admin
         ]);
 
         return redirect()->route('reseller.register.success');
@@ -66,13 +64,22 @@ class PendaftaranReseller extends Controller
     /**
      * Tampilkan halaman sukses pendaftaran
      */
+   // Method SUCCESS (Ganti yang lama)
     public function success()
     {
-        // Hanya reseller yang boleh akses halaman ini
-        if (auth()->user()->role !== 'reseller') {
+        $user = auth()->user();
+
+        // Jika belum pernah mendaftar, lempar ke home
+        if (!$user->status_reseller) {
             return redirect()->route('home');
         }
 
+        // Jika sudah disetujui admin, langsung masuk dashboard reseller
+        if ($user->role === 'reseller' && $user->status_reseller === 'approved') {
+            return redirect()->route('reseller.dashboard');
+        }
+
+        // Jika status pending atau rejected, tampilkan halaman status
         return view('pendaftaran-sukses');
     }
 }

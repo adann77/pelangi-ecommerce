@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('nomor_resi', 50)->nullable();
             $table->string('status_pesanan', 20)->default('pending'); // pending/diproses/dikirim/selesai
             $table->timestamps();
+
+            
  
             $table->foreign('id_user')
                   ->references('id_user')

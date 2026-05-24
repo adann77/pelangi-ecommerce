@@ -82,4 +82,35 @@ class ResellerController extends Controller
     {
         return view('reseller.dashboard');
     }
+
+/**
+     * Setujui pendaftaran reseller -> Ubah role jadi reseller
+     */
+    public function approve($id_user)
+    {
+        $reseller = User::where('id_user', $id_user)->firstOrFail();
+        
+        $reseller->update([
+            'status_reseller' => 'approved',
+            'role' => 'reseller' // OTOMATIS UBAH ROLE JADI RESELLER
+        ]);
+
+        return back()->with('success', 'Pendaftaran reseller telah disetujui. Role user berubah menjadi Reseller.');
+    }
+
+    /**
+     * Tolak pendaftaran reseller -> Role tetap customer
+     */
+    public function reject($id_user)
+    {
+        $reseller = User::where('id_user', $id_user)->firstOrFail();
+        
+        $reseller->update([
+            'status_reseller' => 'rejected',
+            'role' => 'customer' // PASTIKAN TETAP CUSTOMER
+        ]);
+
+        return back()->with('success', 'Pendaftaran reseller telah ditolak.');
+    }
 }
+
